@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#32191e">
+  <title>Casa em Dia — Finanças da família</title>
+  <link rel="stylesheet" href="/styles.css?v=8">
+  <script src="/app.js?v=9" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Casa em Dia, início">
+        <span class="brand-mark" aria-hidden="true"><span>⌂</span></span>
+        <span><strong>CASA EM DIA</strong><small>FINANÇAS DA FAMÍLIA</small></span>
+      </a>
+      <p class="nav-label">VISÃO GERAL</p>
+      <nav class="tabs" aria-label="Navegação principal">
+        <button class="tab active" data-tab="dashboard"><span aria-hidden="true">◫</span> Dashboard</button>
+        <button class="tab" data-tab="transactions"><span aria-hidden="true">↕</span> Lançamentos</button>
+        <button class="tab" data-tab="work"><span aria-hidden="true">◷</span> Meus trabalhos</button>
+      </nav>
+      <div class="sidebar-note">
+        <span class="live-dot"></span>
+        <span><strong>Dados locais</strong><small>Sincronizados nesta rede</small></span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">SUAS FINANÇAS, SEM COMPLICAÇÃO</p>
+          <h1 id="page-title">Dashboard</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="month-picker" aria-label="Período do dashboard">
+            <span aria-hidden="true">▦</span>
+            <select id="month-select" aria-label="Mês do dashboard"></select>
+            <span class="month-year-divider" aria-hidden="true">/</span>
+            <select id="year-select" aria-label="Ano do dashboard"></select>
+          </div>
+          <button class="button button-primary" id="new-transaction"><span aria-hidden="true">＋</span> Novo lançamento</button>
+        </div>
+      </header>
+
+      <section class="view active" id="dashboard-view" aria-labelledby="page-title">
+        <div class="welcome-row">
+          <div><h2>Visão da casa <span class="heading-emoji" aria-hidden="true">🏡</span></h2><p>Acompanhe o que entra e sai do seu orçamento.</p></div>
+          <span class="updated-label"><span class="live-dot"></span> Atualizado automaticamente</span>
+        </div>
+        <div class="summary-grid">
+          <article class="summary-card balance-card">
+            <div class="card-heading"><span><span class="heading-emoji" aria-hidden="true">💰</span> Saldo do mês</span><span class="card-icon">◈</span></div>
+            <strong class="metric" id="balance-total">R$ 0,00</strong>
+            <small>Entradas menos saídas no período</small>
+          </article>
+          <article class="summary-card">
+            <div class="card-heading"><span><span class="heading-emoji" aria-hidden="true">📥</span> Entradas</span><span class="card-icon income-icon">↙</span></div>
+            <strong class="metric" id="income-total">R$ 0,00</strong>
+            <small id="income-count">0 lançamentos</small>
+          </article>
+          <article class="summary-card">
+            <div class="card-heading"><span><span class="heading-emoji" aria-hidden="true">📤</span> Saídas</span><span class="card-icon expense-icon">↗</span></div>
+            <strong class="metric" id="expense-total">R$ 0,00</strong>
+            <small id="expense-count">0 lançamentos</small>
+          </article>
+          <article class="summary-card">
+            <div class="card-heading"><span><span class="heading-emoji" aria-hidden="true">📊</span> Despesas / entradas</span><span class="card-icon ratio-icon">%</span></div>
+            <strong class="metric" id="expense-ratio">—</strong>
+            <small>Percentual da renda comprometida</small>
+          </article>
+        </div>
+
+        <div class="chart-grid">
+          <article class="panel">
+            <div class="panel-heading"><div><h3><span aria-hidden="true">🧾</span> Para onde vai o dinheiro</h3><p>Despesas por categoria neste mês</p></div><span class="panel-badge">DESPESAS</span></div>
+            <div class="pie-layout">
+              <div class="chart-wrap pie-wrap"><canvas id="category-chart" aria-label="Gráfico de despesas por categoria"></canvas><p class="chart-empty" id="pie-empty">Adicione despesas<br>para ver as categorias.</p></div>
+              <div class="legend" id="category-legend"></div>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><h3><span aria-hidden="true">📈</span> Movimento do saldo</h3><p>Entradas menos saídas por dia neste mês</p></div><span class="panel-badge">POR DIA</span></div>
+            <div class="chart-wrap movement-wrap"><canvas id="balance-chart" aria-label="Gráfico de colunas do movimento diário do saldo"></canvas><p class="chart-empty" id="movement-empty">Adicione lançamentos<br>para ver o movimento.</p></div>
+            <div class="chart-caption"><span><i class="column-key positive"></i> Saldo aumentou</span><span><i class="column-key negative"></i> Saldo diminuiu</span></div>
+          </article>
+        </div>
+        <article class="panel weekly-panel">
+          <div class="panel-heading"><div><h3><span aria-hidden="true">🗓️</span> Entradas e saídas por semana</h3><p>Compare a movimentação semanal deste mês</p></div><span class="panel-badge">COMPARATIVO</span></div>
+          <div class="chart-wrap weekly-wrap"><canvas id="weekly-chart" aria-label="Gráfico de colunas comparando entradas e saídas por semana"></canvas><p class="chart-empty" id="weekly-empty">Adicione lançamentos<br>para comparar as semanas.</p></div>
+          <div class="chart-caption"><span><i class="column-key weekly-income"></i> Entradas</span><span><i class="column-key weekly-expense"></i> Saídas</span></div>
+        </article>
+        <article class="panel recent-panel">
+          <div class="panel-heading"><div><h3><span aria-hidden="true">📋</span> Últimos lançamentos</h3><p>Os 8 lançamentos mais recentes, de todos os meses</p></div><button class="text-button" data-open-tab="transactions">Ver todos <span aria-hidden="true">→</span></button></div>
+          <div class="table-wrap"><table><thead><tr><th>DESCRIÇÃO</th><th>CATEGORIA</th><th>DATA</th><th class="align-right">VALOR</th></tr></thead><tbody id="recent-list"></tbody></table></div>
+          <p class="empty-state" id="recent-empty">Ainda não há lançamentos neste mês. Registre uma entrada ou despesa para começar.</p>
+        </article>
+      </section>
+
+      <section class="view" id="transactions-view">
+        <div class="section-intro"><div><h2>Seus lançamentos</h2><p>Registre e acompanhe as entradas e despesas da família.</p></div><button class="button button-primary" data-new-transaction><span aria-hidden="true">＋</span> Adicionar lançamento</button></div>
+        <article class="panel transactions-panel">
+          <div class="filter-row"><div class="filter-tabs" role="group" aria-label="Filtrar lançamentos">
+            <button class="filter active" data-filter="all">Todos</button><button class="filter" data-filter="income">Entradas</button><button class="filter" data-filter="expense">Despesas</button>
+          </div><span class="results-count" id="results-count">0 lançamentos</span></div>
+          <div class="table-wrap"><table><thead><tr><th>DESCRIÇÃO</th><th>CATEGORIA</th><th>DATA</th><th>TIPO</th><th class="align-right">VALOR</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="transaction-list"></tbody></table></div>
+          <p class="empty-state" id="transactions-empty">Nenhum lançamento para este filtro e mês.</p>
+        </article>
+      </section>
+
+      <section class="view" id="work-view">
+        <div class="section-intro"><div><h2>Meus trabalhos</h2><p>Acompanhe os ganhos do Uber, as horas estimadas e os serviços extras.</p></div></div>
+        <div class="work-grid">
+          <article class="panel rate-panel">
+            <div class="panel-heading"><div><h3>🚗 Valor da hora no Uber</h3><p>Estimativa aplicada aos ganhos registrados por dia trabalhado.</p></div><span class="panel-badge">UBER</span></div>
+            <div class="rate-cards">
+              <div class="rate-card"><span>Segunda a quinta</span><strong id="weekday-rate">Configure abaixo</strong></div>
+              <div class="rate-card weekend-rate"><span>Sexta a domingo</span><strong id="weekend-rate">Configure abaixo</strong></div>
+            </div>
+            <p class="helper-note">Cadastre cada ganho UBER com a data do dia trabalhado. As horas são estimadas dividindo o valor pela tarifa daquele dia.</p>
+            <form id="uber-cost-form" class="uber-cost-form">
+              <label>Combustível (R$/km)<input name="fuel_cost_per_km" type="text" inputmode="decimal" placeholder="Informe o custo"></label>
+              <label>Custo-base do carro (R$/km)<input name="vehicle_cost_per_km" type="text" inputmode="decimal" placeholder="Informe o custo"></label>
+              <label>Meta de margem líquida (%)<input name="target_margin_percent" type="text" inputmode="decimal" placeholder="Opcional"></label>
+              <label>Taxa de segunda a quinta (R$/hora)<input name="weekday_hourly_rate" type="text" inputmode="decimal" placeholder="Necessária para estimar horas"></label>
+              <label>Taxa de sexta a domingo (R$/hora)<input name="weekend_hourly_rate" type="text" inputmode="decimal" placeholder="Necessária para estimar horas"></label>
+              <button class="button button-primary" type="submit">Salvar custos do Uber</button>
+              <p class="form-error uber-cost-error" id="uber-cost-error" role="alert"></p>
+            </form>
+          </article>
+          <article class="panel work-summary">
+            <div class="panel-heading"><div><h3>📊 Resumo do mês</h3><p>Uber e trabalhos extras no mês selecionado.</p></div><span class="panel-badge">AUTOMÁTICO</span></div>
+            <div class="work-metrics">
+              <div class="work-metric"><span>Ganhos Uber</span><strong id="work-uber-income">R$ 0,00</strong></div>
+              <div class="work-metric"><span>Horas Uber estimadas</span><strong id="work-uber-hours">0 h</strong></div>
+              <div class="work-metric"><span>Média Uber por semana</span><strong id="work-uber-weekly-hours">0 h</strong></div>
+              <div class="work-metric"><span>Horas em extras</span><strong id="work-extra-hours">0 h</strong></div>
+              <div class="work-metric"><span>KM informados</span><strong id="uber-distance-total">0 km</strong></div>
+            </div>
+            <div class="expense-target">
+              <span>Despesas do mês</span><strong id="work-expenses-total">R$ 0,00</strong>
+              <span>Horas necessárias para cobrir as despesas</span><strong id="work-required-hours">—</strong>
+            </div>
+            <div class="progress-track"><div class="progress-bar" id="work-hours-progress"></div></div>
+            <div class="work-status" id="work-hours-status">Registre os ganhos Uber e serviços extras para acompanhar suas horas.</div>
+            <div class="uber-profit-summary">
+              <div><span>Custos Uber estimados</span><strong id="uber-estimated-costs">—</strong></div>
+              <div><span>Lucro líquido estimado</span><strong id="uber-estimated-profit">—</strong></div>
+              <div><span>Margem líquida</span><strong id="uber-margin">—</strong></div>
+            </div>
+            <p class="helper-note" id="uber-margin-status">Informe seus custos por km e registre a quilometragem nos lançamentos UBER para estimar a margem.</p>
+          </article>
+        </div>
+        <article class="panel maintenance-panel">
+          <div class="panel-heading"><div><h3>🚘 Manutenção mensal do carro</h3><p>O valor será lançado uma única vez como despesa no mês selecionado.</p></div><span class="panel-badge" id="maintenance-month-label"></span></div>
+          <form id="vehicle-cost-form" class="vehicle-cost-form">
+            <label>Custo de manutenção do carro no mês (R$)<input name="amount" type="text" inputmode="decimal" placeholder="0,00"></label>
+            <button class="button button-primary" type="submit">Salvar manutenção do mês</button>
+            <p class="form-error vehicle-cost-error" id="vehicle-cost-error" role="alert"></p>
+          </form>
+        </article>
+        <article class="panel uber-mileage-panel">
+          <div class="panel-heading"><div><h3>🛣️ Quilometragem dos ganhos Uber</h3><p>Informe os quilômetros totais do dia para habilitar a estimativa de custos e margem.</p></div><span class="results-count" id="uber-mileage-count">0 dias</span></div>
+          <div class="table-wrap"><table><thead><tr><th>DATA</th><th>GANHO DO DIA</th><th>KM RODADOS</th><th><span class="sr-only">Ação</span></th></tr></thead><tbody id="uber-mileage-list"></tbody></table></div>
+          <p class="empty-state" id="uber-mileage-empty">Registre ganhos na categoria UBER para informar a quilometragem por dia.</p>
+        </article>
+        <article class="panel extra-work-panel">
+          <div class="panel-heading"><div><h3>🧰 Registrar serviço extra</h3><p>Informe horas, valor recebido, benefício e custo, se houver.</p></div><span class="panel-badge">NOVO SERVIÇO</span></div>
+          <form id="extra-work-form" class="extra-work-form">
+            <label>Qual foi o serviço?<input name="description" maxlength="120" placeholder="Ex.: Instalação, freelance..." required></label>
+            <label>Data trabalhada<input id="extra-work-date" name="date" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" required></label>
+            <label>Horas trabalhadas<input name="hours" type="text" inputmode="decimal" placeholder="Ex.: 2,5" required></label>
+            <label>Valor recebido (R$)<input name="received" type="text" inputmode="decimal" placeholder="0,00" required></label>
+            <label>Benefício extra (R$)<input name="benefit" type="text" inputmode="decimal" placeholder="Opcional"></label>
+            <label>Custo do trabalho (R$)<input name="cost" type="text" inputmode="decimal" placeholder="Opcional"></label>
+            <button class="button button-primary" type="submit">Salvar serviço extra</button>
+            <p class="form-error extra-work-error" id="extra-work-error" role="alert"></p>
+          </form>
+          <p class="helper-note">Recebido e benefício são adicionados às entradas do dashboard; o custo é adicionado às despesas. O serviço e seus lançamentos podem ser excluídos juntos.</p>
+        </article>
+        <article class="panel extra-history-panel">
+          <div class="panel-heading"><div><h3>📋 Serviços extras do mês</h3><p>Serviços cadastrados no período selecionado.</p></div><span class="results-count" id="extra-work-count">0 serviços</span></div>
+          <div class="table-wrap"><table><thead><tr><th>SERVIÇO</th><th>DATA</th><th>HORAS</th><th>RECEBIDO</th><th>BENEFÍCIO</th><th>CUSTO</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="extra-work-list"></tbody></table></div>
+          <p class="empty-state" id="extra-work-empty">Nenhum serviço extra registrado neste mês.</p>
+        </article>
+      </section>
+      <footer class="footer-note">Seus dados ficam no computador que executa o servidor. Compartilhe a rede apenas com pessoas de confiança.</footer>
+    </main>
+  </div>
+
+  <dialog id="transaction-dialog">
+    <form id="transaction-form" class="dialog-card">
+      <div class="dialog-heading"><div><p class="eyebrow">NOVO REGISTRO</p><h2>Adicionar lançamento</h2></div><button type="button" class="close-button" id="close-dialog" aria-label="Fechar">×</button></div>
+      <label>Tipo de lançamento<select name="type" id="transaction-type"><option value="expense">Despesa</option><option value="income">Entrada</option></select></label>
+      <label>Descrição<input name="description" maxlength="120" placeholder="Ex.: Conta de energia" required></label>
+      <div class="form-row">
+        <label>Valor (R$)
+          <div class="amount-entry">
+            <input id="transaction-amount" name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required>
+            <div class="amount-stepper" aria-label="Ajuste rápido do valor">
+              <button type="button" data-amount-step="-10" aria-label="Diminuir R$ 10">−10</button>
+              <button type="button" data-amount-step="10" aria-label="Aumentar R$ 10">+10</button>
+            </div>
+          </div>
+        </label>
+        <label>Data (DD/MM/AAAA)
+          <div class="date-entry">
+            <input id="transaction-date" name="date" type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" autocomplete="off" required>
+            <div class="calendar-control">
+              <button type="button" id="date-picker-button" class="calendar-button" aria-label="Abrir calendário"><span aria-hidden="true">▦</span></button>
+              <input id="date-picker" type="date" lang="pt-BR" tabindex="-1" aria-label="Selecionar data no calendário">
+            </div>
+          </div>
+        </label>
+      </div>
+      <label>Categoria<select name="category" id="category-select"></select></label>
+      <label id="uber-distance-label" class="conditional-field" hidden>Quilômetros rodados neste dia (opcional)
+        <input id="transaction-distance-km" name="distance_km" type="text" inputmode="decimal" placeholder="Ex.: 120">
+      </label>
+      <p class="form-error" id="form-error" role="alert"></p>
+      <div class="dialog-actions"><button type="button" class="button button-secondary" id="cancel-dialog">Cancelar</button><button type="submit" class="button button-primary">Salvar lançamento</button></div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

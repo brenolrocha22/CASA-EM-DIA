@@ -8,6 +8,8 @@ const money = new Intl.NumberFormat("pt-BR", {style: "currency", currency: "BRL"
 const monthFormat = new Intl.DateTimeFormat("pt-BR", {month: "long", year: "numeric"});
 const monthNameFormat = new Intl.DateTimeFormat("pt-BR", {month: "long"});
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {day: "2-digit", month: "short"});
+const DEFAULT_WEEKDAY_HOURLY_RATE = 38;
+const DEFAULT_WEEKEND_HOURLY_RATE = 50;
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const amountOf = (transaction) => Number(transaction.amount);
@@ -287,8 +289,8 @@ function transactionRow(item, includeActions) {
 
 function renderWork(income, expenses, extraWork, uberSettings, monthlyMaintenance) {
   const uberTransactions = income.filter((item) => item.category.toUpperCase() === "UBER");
-  const weekdayRate = Number(uberSettings.weekday_hourly_rate) || 0;
-  const weekendRate = Number(uberSettings.weekend_hourly_rate) || 0;
+  const weekdayRate = Number(uberSettings.weekday_hourly_rate ?? DEFAULT_WEEKDAY_HOURLY_RATE);
+  const weekendRate = Number(uberSettings.weekend_hourly_rate ?? DEFAULT_WEEKEND_HOURLY_RATE);
   const hourlyRatesConfigured = weekdayRate > 0 && weekendRate > 0;
   let uberHours = 0;
   for (const transaction of uberTransactions) {
@@ -312,14 +314,17 @@ function renderWork(income, expenses, extraWork, uberSettings, monthlyMaintenanc
   $("#weekend-rate").textContent = hourlyRatesConfigured ? `${money.format(weekendRate)} / hora` : "Configure abaixo";
   $("#work-uber-income").textContent = money.format(uberIncome);
   $("#work-uber-hours").textContent = hourlyRatesConfigured ? `${uberHours.toLocaleString("pt-BR", {maximumFractionDigits: 1})} h` : "—";
-  $("#work-uber-weekly-hours").textContent = hourlyRatesConfigured ? `${weeklyAverage.toLocaleString("pt-BR", {maximumFractionDigits: 1})} h` : "—";
+  $("#work-uber-weekly-hours").textContent = `${weeklyAverage.toLocaleString("pt-BR", {maximumFractionDigits: 1})} h`;
   $("#work-extra-hours").textContent = `${extraHours.toLocaleString("pt-BR", {maximumFractionDigits: 1})} h`;
   $("#work-expenses-total").textContent = money.format(expenseTotal);
   $("#work-required-hours").textContent = hourlyRatesConfigured ? `${requiredHours.toLocaleString("pt-BR", {maximumFractionDigits: 1})} h` : "—";
   const totalDistance = uberTransactions.reduce((sum, item) => sum + Number(item.distance_km || 0), 0);
   $("#uber-distance-total").textContent = `${totalDistance.toLocaleString("pt-BR", {maximumFractionDigits: 1})} km`;
   const allDistanceEntered = uberTransactions.length > 0 && uberTransactions.every((item) => Number(item.distance_km) > 0);
-  const costsConfigured = uberSettings.fuel_cost_per_km != null && uberSettings.vehicle_cost_per_km != null;
+  const fuelSettingsConfigured =
+    uberSettings.fuel_price_per_liter != null &&
+    Number(uberSettings.fuel_efficiency_km_per_liter) > 0;
+  const costsConfigured = fuelSettingsConfigured && uberSettings.vehicle_cost_per_km != null;
   const marginStatus = $("#uber-margin-status");
   if (!uberTransactions.length) {
     $("#uber-estimated-costs").textContent = "—";
@@ -333,11 +338,14 @@ function renderWork(income, expenses, extraWork, uberSettings, monthlyMaintenanc
     const missingDistanceCount = uberTransactions.filter((item) => !(Number(item.distance_km) > 0)).length;
     const missing = [];
     if (missingDistanceCount) missing.push(`informe a quilometragem de ${missingDistanceCount} ${missingDistanceCount === 1 ? "dia" : "dias"} na lista abaixo`);
-    if (uberSettings.fuel_cost_per_km == null) missing.push("configure o custo de combustível por km");
+    if (uberSettings.fuel_price_per_liter == null) missing.push("informe o preço final do combustível por litro");
+    if (!(Number(uberSettings.fuel_efficiency_km_per_liter) > 0)) missing.push("informe o consumo médio do carro em km/L");
     if (uberSettings.vehicle_cost_per_km == null) missing.push("configure o custo-base do carro por km");
     marginStatus.textContent = `Estimativa indisponível: ${missing.join(" e ")}.`;
   } else {
-    const variableCosts = totalDistance * (Number(uberSettings.fuel_cost_per_km) + Number(uberSettings.vehicle_cost_per_km));
+    const fuelCostPerKm =
+      Number(uberSettings.fuel_price_per_liter) / Number(uberSettings.fuel_efficiency_km_per_liter);
+    const variableCosts = totalDistance * (fuelCostPerKm + Number(uberSettings.vehicle_cost_per_km));
     const estimatedCosts = variableCosts + Number(monthlyMaintenance || 0);
     const netProfit = uberIncome - estimatedCosts;
     const margin = uberIncome ? netProfit / uberIncome * 100 : 0;
@@ -346,13 +354,12 @@ function renderWork(income, expenses, extraWork, uberSettings, monthlyMaintenanc
     $("#uber-margin").textContent = `${margin.toLocaleString("pt-BR", {maximumFractionDigits: 1})}%`;
     const target = uberSettings.target_margin_percent;
     marginStatus.textContent = target == null
-      ? "Estimativa: ganhos UBER − (km × custos configurados por km) − manutenção mensal."
+      ? "Estimativa: ganhos UBER − (km × [preço do combustível ÷ consumo em km/L + custo-base por km]) − manutenção mensal."
       : `Meta configurada: ${Number(target).toLocaleString("pt-BR", {maximumFractionDigits: 1})}%. ${margin >= Number(target) ? "Meta atingida." : "Abaixo da meta."}`;
   }
   $("#work-hours-progress").style.width = requiredHours ? `${Math.min(100, totalHours / requiredHours * 100)}%` : (totalHours ? "100%" : "0%");
   const status = $("#work-hours-status");
-  if (!hourlyRatesConfigured) status.textContent = "Configure as taxas por hora para estimar as horas Uber e a meta para cobrir as despesas.";
-  else if (!requiredHours && !totalHours) status.textContent = "Registre os ganhos Uber e serviços extras para acompanhar suas horas.";
+  if (!requiredHours && !totalHours) status.textContent = "Registre os ganhos Uber e serviços extras para acompanhar suas horas.";
   else if (!requiredHours) status.textContent = "Não há despesas neste mês. As horas de Uber e serviços extras estão contabilizadas.";
   else if (totalHours < requiredHours) status.textContent = `Somando Uber e extras, faltam ${(requiredHours - totalHours).toLocaleString("pt-BR", {maximumFractionDigits: 1})} h para a meta estimada do mês.`;
   else status.textContent = `Meta mensal de horas alcançada; ${(totalHours - requiredHours).toLocaleString("pt-BR", {maximumFractionDigits: 1})} h acima da meta.`;
@@ -428,10 +435,14 @@ function renderVehicleCostForm() {
 
 function renderUberSettingsForm() {
   const form = $("#uber-cost-form");
-  for (const name of ["fuel_cost_per_km", "vehicle_cost_per_km", "target_margin_percent", "weekday_hourly_rate", "weekend_hourly_rate"]) {
+  const defaults = {
+    weekday_hourly_rate: DEFAULT_WEEKDAY_HOURLY_RATE,
+    weekend_hourly_rate: DEFAULT_WEEKEND_HOURLY_RATE
+  };
+  for (const name of ["fuel_price_per_liter", "fuel_efficiency_km_per_liter", "vehicle_cost_per_km", "target_margin_percent", "weekday_hourly_rate", "weekend_hourly_rate"]) {
     const input = form.elements[name];
     if (document.activeElement === input) continue;
-    const value = state.uberSettings[name];
+    const value = state.uberSettings[name] ?? defaults[name] ?? null;
     input.value = value == null ? "" : Number(value).toLocaleString("pt-BR", {maximumFractionDigits: 2});
   }
 }
@@ -684,12 +695,14 @@ function init() {
     event.preventDefault();
     const form = event.currentTarget;
     const settings = {};
-    for (const key of ["fuel_cost_per_km", "vehicle_cost_per_km", "target_margin_percent", "weekday_hourly_rate", "weekend_hourly_rate"]) {
+    for (const key of ["fuel_price_per_liter", "fuel_efficiency_km_per_liter", "vehicle_cost_per_km", "target_margin_percent", "weekday_hourly_rate", "weekend_hourly_rate"]) {
       const value = form.elements[key].value.trim();
       settings[key] = value ? parseBrazilianAmount(value) : null;
     }
-    if (Object.values(settings).some((value) => value != null && (!Number.isFinite(value) || value < 0))) {
-      $("#uber-cost-error").textContent = "Informe valores válidos, iguais ou maiores que zero.";
+    if (Object.entries(settings).some(([key, value]) =>
+      value != null && (!Number.isFinite(value) || value < 0 ||
+        (key === "fuel_efficiency_km_per_liter" && value === 0)))) {
+      $("#uber-cost-error").textContent = "Informe valores válidos; o consumo em km/L deve ser maior que zero.";
       return;
     }
     try {

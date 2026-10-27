@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#32191e">
   <title>Casa em Dia — Finanças da família</title>
   <link rel="stylesheet" href="/styles.css?v=8">
-  <script src="/app.js?v=9" defer></script>
+  <script src="/app.js?v=10" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -120,12 +120,13 @@
             </div>
             <p class="helper-note">Cadastre cada ganho UBER com a data do dia trabalhado. As horas são estimadas dividindo o valor pela tarifa daquele dia.</p>
             <form id="uber-cost-form" class="uber-cost-form">
-              <label>Combustível (R$/km)<input name="fuel_cost_per_km" type="text" inputmode="decimal" placeholder="Informe o custo"></label>
+              <label>Preço final do combustível (R$/L)<input name="fuel_price_per_liter" type="text" inputmode="decimal" placeholder="Após desconto, ex.: 6,27"></label>
+              <label>Consumo médio do carro (km/L)<input name="fuel_efficiency_km_per_liter" type="text" inputmode="decimal" placeholder="Ex.: quilômetros por litro"></label>
               <label>Custo-base do carro (R$/km)<input name="vehicle_cost_per_km" type="text" inputmode="decimal" placeholder="Informe o custo"></label>
               <label>Meta de margem líquida (%)<input name="target_margin_percent" type="text" inputmode="decimal" placeholder="Opcional"></label>
-              <label>Taxa de segunda a quinta (R$/hora)<input name="weekday_hourly_rate" type="text" inputmode="decimal" placeholder="Necessária para estimar horas"></label>
-              <label>Taxa de sexta a domingo (R$/hora)<input name="weekend_hourly_rate" type="text" inputmode="decimal" placeholder="Necessária para estimar horas"></label>
-              <button class="button button-primary" type="submit">Salvar custos do Uber</button>
+              <label>Taxa média de segunda a quinta (R$/hora)<input name="weekday_hourly_rate" type="text" inputmode="decimal" placeholder="38,00"></label>
+              <label>Taxa média de sexta a domingo (R$/hora)<input name="weekend_hourly_rate" type="text" inputmode="decimal" placeholder="50,00"></label>
+              <button class="button button-primary" type="submit">Salvar configurações</button>
               <p class="form-error uber-cost-error" id="uber-cost-error" role="alert"></p>
             </form>
           </article>
@@ -149,7 +150,7 @@
               <div><span>Lucro líquido estimado</span><strong id="uber-estimated-profit">—</strong></div>
               <div><span>Margem líquida</span><strong id="uber-margin">—</strong></div>
             </div>
-            <p class="helper-note" id="uber-margin-status">Informe seus custos por km e registre a quilometragem nos lançamentos UBER para estimar a margem.</p>
+            <p class="helper-note" id="uber-margin-status">Informe o preço efetivo por litro (já com desconto), o consumo do carro em km/L, o custo-base por km e a quilometragem dos dias UBER para estimar a margem.</p>
           </article>
         </div>
         <article class="panel maintenance-panel">

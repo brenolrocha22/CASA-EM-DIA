@@ -8,7 +8,7 @@ Dashboard gratuito e leve para organizar as finanças da casa. Acompanhe entrada
 - Histórico dos oito lançamentos mais recentes, sem limitar os dados usados nos totais mensais.
 - Registro e filtro de entradas e despesas, com categorias comuns e valores no formato brasileiro.
 - Registro de ganhos por trabalho, serviços extras, horas trabalhadas e despesas do veículo.
-- Taxas horárias, custos por quilômetro e margem de trabalho configuráveis pelo usuário.
+- Taxas horárias padrão de R$ 38/h de segunda a quinta e R$ 50/h de sexta a domingo (ajustáveis), preço efetivo do combustível em R$/L, consumo do carro em km/L, custo-base em R$/km e margem configuráveis.
 - Atualização automática entre dispositivos conectados ao servidor local.
 - Banco pessoal criado automaticamente em `data/household.sqlite3`. O repositório não contém dados financeiros de exemplo ou dados de usuários.
 

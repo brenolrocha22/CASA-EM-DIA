@@ -133,7 +133,8 @@ def validate_uber_settings(data):
         raise ValueError("Envie as configurações de custos do Uber.")
     settings = {}
     for name in (
-        "fuel_cost_per_km",
+        "fuel_price_per_liter",
+        "fuel_efficiency_km_per_liter",
         "vehicle_cost_per_km",
         "target_margin_percent",
         "weekday_hourly_rate",
@@ -147,9 +148,19 @@ def validate_uber_settings(data):
             value = parse_amount(raw_value)
         except ValueError:
             raise ValueError("Informe custos e percentual válidos.")
-        limit = 100 if name == "target_margin_percent" else 10000
-        if not math.isfinite(value) or value < 0 or value > limit:
-            raise ValueError("Custos devem ficar entre 0 e 10.000; a meta de margem entre 0% e 100%.")
+        limit = {
+            "target_margin_percent": 100,
+            "fuel_price_per_liter": 1000,
+            "fuel_efficiency_km_per_liter": 100,
+            "vehicle_cost_per_km": 10000,
+            "weekday_hourly_rate": 10000,
+            "weekend_hourly_rate": 10000,
+        }[name]
+        minimum = 0 if name != "fuel_efficiency_km_per_liter" else 0.000001
+        if not math.isfinite(value) or value < minimum or value > limit:
+            if name == "fuel_efficiency_km_per_liter":
+                raise ValueError("O consumo médio deve ser maior que zero e menor ou igual a 100 km/L.")
+            raise ValueError("Confira os custos, as taxas horárias e a meta de margem informados.")
         settings[name] = value
     return settings
 
@@ -272,10 +283,15 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             with database() as connection:
                 rows = connection.execute(
                     """SELECT key, value FROM settings
-                       WHERE key IN ('fuel_cost_per_km', 'vehicle_cost_per_km', 'target_margin_percent')"""
+                       WHERE key IN (
+                           'fuel_price_per_liter', 'fuel_efficiency_km_per_liter',
+                           'vehicle_cost_per_km', 'target_margin_percent',
+                           'weekday_hourly_rate', 'weekend_hourly_rate'
+                       )"""
                 ).fetchall()
             settings = {
-                "fuel_cost_per_km": None,
+                "fuel_price_per_liter": None,
+                "fuel_efficiency_km_per_liter": None,
                 "vehicle_cost_per_km": None,
                 "target_margin_percent": None,
                 "weekday_hourly_rate": None,

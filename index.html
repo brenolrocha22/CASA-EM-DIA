@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#32191e">
   <title>Casa em Dia — Finanças da família</title>
-  <link rel="stylesheet" href="/styles.css?v=8">
-  <script src="/app.js?v=11" defer></script>
+  <link rel="stylesheet" href="/styles.css?v=9">
+  <script src="/app.js?v=12" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -21,6 +21,18 @@
         <button class="tab" data-tab="transactions"><span aria-hidden="true">↕</span> Lançamentos</button>
         <button class="tab" data-tab="work"><span aria-hidden="true">◷</span> Meus trabalhos</button>
       </nav>
+      <div class="theme-control">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-expanded="false" aria-controls="theme-picker">
+          <span aria-hidden="true">🎨</span> Personalizar cores
+        </button>
+        <div class="theme-picker" id="theme-picker" role="group" aria-label="Paleta de cores" hidden>
+          <p>Escolha uma paleta</p>
+          <button type="button" class="theme-option" data-theme-option="blue" aria-pressed="false"><i class="theme-swatch swatch-blue"></i>Azul</button>
+          <button type="button" class="theme-option" data-theme-option="green" aria-pressed="false"><i class="theme-swatch swatch-green"></i>Verde</button>
+          <button type="button" class="theme-option" data-theme-option="yellow" aria-pressed="false"><i class="theme-swatch swatch-yellow"></i>Amarelo</button>
+          <button type="button" class="theme-option" data-theme-option="red" aria-pressed="false"><i class="theme-swatch swatch-red"></i>Vermelho</button>
+        </div>
+      </div>
       <div class="sidebar-note">
         <span class="live-dot"></span>
         <span><strong>Dados locais</strong><small>Sincronizados nesta rede</small></span>

@@ -10,6 +10,13 @@ const monthNameFormat = new Intl.DateTimeFormat("pt-BR", {month: "long"});
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {day: "2-digit", month: "short"});
 const DEFAULT_WEEKDAY_HOURLY_RATE = 38;
 const DEFAULT_WEEKEND_HOURLY_RATE = 50;
+const THEME_STORAGE_KEY = "casa-em-dia-theme";
+const THEME_PALETTES = {
+  blue: ["#4285d4", "#60a5fa", "#2563eb", "#93c5fd", "#1d4ed8", "#bfdbfe", "#3b82f6", "#7bb6f5", "#1e40af"],
+  green: ["#2e9b65", "#4caf79", "#218653", "#82c99a", "#176b43", "#b2dfc0", "#35a66d", "#70bd8b", "#145a39"],
+  yellow: ["#d2a116", "#e7bb3c", "#b8860b", "#f0d477", "#987000", "#f7e9ae", "#d9aa24", "#edcf69", "#795800"],
+  red: COLORS
+};
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const amountOf = (transaction) => Number(transaction.amount);
@@ -41,6 +48,34 @@ function updateDateMask(input) {
   const digits = input.value.replace(/\D/g, "").slice(0, 8);
   input.value = digits.length <= 2 ? digits : `${digits.slice(0, 2)}/${digits.slice(2, 4)}${digits.length > 4 ? `/${digits.slice(4)}` : ""}`;
 }
+function setTheme(themeName, persist = false) {
+  const theme = Object.hasOwn(THEME_PALETTES, themeName) ? themeName : "red";
+  document.documentElement.dataset.theme = theme;
+  const activeColors = THEME_PALETTES[theme];
+  COLORS.splice(0, COLORS.length, ...activeColors);
+  $$("[data-theme-option]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.themeOption === theme));
+  });
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (error) {
+      console.error("Não foi possível salvar a paleta neste navegador:", error);
+      toast("A paleta foi aplicada, mas não pôde ser salva neste navegador.");
+    }
+  }
+}
+
+function loadTheme() {
+  let savedTheme = "red";
+  try {
+    savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || savedTheme;
+  } catch (error) {
+    console.error("Não foi possível ler a paleta salva neste navegador:", error);
+  }
+  setTheme(savedTheme);
+}
+
 const currentMonth = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -160,7 +195,7 @@ function renderBalanceColumns(transactions) {
   const barWidth = Math.max(3, Math.min(18, slot * .62));
   days.forEach(([date, value], index) => {
     const x = padding.left + slot * (index + .5);
-    const color = value >= 0 ? "#777d38" : "#e94f5d";
+    const color = value >= 0 ? "#777d38" : getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     const end = y(value);
@@ -214,7 +249,7 @@ function renderWeeklyFlows(transactions) {
     const center = padding.left + slot * (index + .5);
     const values = [
       {value: week.income, x: center - barWidth - 2, color: "#777d38"},
-      {value: week.expense, x: center + 2, color: "#e94f5d"}
+      {value: week.expense, x: center + 2, color: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()}
     ];
     for (const bar of values) {
       ctx.fillStyle = bar.color;
@@ -600,7 +635,22 @@ async function deleteExtraWork(item) {
 
 function init() {
   state.month = currentMonth();
+  loadTheme();
   $$(".tab").forEach((tab) => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
+  $("#theme-toggle").addEventListener("click", () => {
+    const picker = $("#theme-picker");
+    const expanded = $("#theme-toggle").getAttribute("aria-expanded") === "true";
+    picker.hidden = expanded;
+    $("#theme-toggle").setAttribute("aria-expanded", String(!expanded));
+  });
+  $$("[data-theme-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setTheme(button.dataset.themeOption, true);
+      $("#theme-picker").hidden = true;
+      $("#theme-toggle").setAttribute("aria-expanded", "false");
+      render();
+    });
+  });
   $$("[data-open-tab]").forEach((button) => button.addEventListener("click", () => switchTab(button.dataset.openTab)));
   $("#new-transaction").addEventListener("click", openDialog);
   $$("[data-new-transaction]").forEach((button) => button.addEventListener("click", openDialog));

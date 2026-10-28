@@ -14,6 +14,7 @@ const money = new Intl.NumberFormat("pt-BR", {style: "currency", currency: "BRL"
 const monthFormat = new Intl.DateTimeFormat("pt-BR", {month: "long", year: "numeric"});
 const monthNameFormat = new Intl.DateTimeFormat("pt-BR", {month: "long"});
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {day: "2-digit", month: "short"});
+const brazilianDateFormat = new Intl.DateTimeFormat("pt-BR", {day: "2-digit", month: "2-digit", year: "numeric"});
 const DEFAULT_WEEKDAY_HOURLY_RATE = 38;
 const DEFAULT_WEEKEND_HOURLY_RATE = 50;
 const THEME_STORAGE_KEY = "casa-em-dia-theme";
@@ -350,7 +351,7 @@ function transactionRow(item, includeActions) {
   category.className = "category-cell";
   category.textContent = item.category;
   const date = document.createElement("td");
-  date.textContent = dateFormat.format(new Date(`${item.date}T12:00:00`));
+  date.textContent = brazilianDateFormat.format(new Date(`${item.date}T12:00:00`));
   row.append(description, category, date);
   if (includeActions) {
     const type = document.createElement("td");

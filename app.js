@@ -98,7 +98,6 @@ function render() {
   const expenses = transactions.filter((item) => item.type === "expense");
   const incomeTotal = income.reduce((sum, item) => sum + amountOf(item), 0);
   const expenseTotal = expenses.reduce((sum, item) => sum + amountOf(item), 0);
-  $(".balance-card").classList.toggle("balance-positive", incomeTotal > expenseTotal);
   $("#balance-total").textContent = money.format(incomeTotal - expenseTotal);
   $("#income-total").textContent = money.format(incomeTotal);
   $("#expense-total").textContent = money.format(expenseTotal);

@@ -6,7 +6,7 @@ Dashboard gratuito e leve para organizar as finanças da casa. Acompanhe entrada
 
 - Dashboard mensal com seleção separada de mês e ano, totais, gráficos por categoria, movimento diário e comparativo semanal.
 - Histórico dos oito lançamentos mais recentes, sem limitar os dados usados nos totais mensais.
-- Personalização visual com paletas azul, verde, amarelo ou vermelho, salva localmente no navegador.
+- Personalização visual com paletas azul, verde, amarelo ou vermelho, aplicada também ao saldo do mês e à barra de navegação, e salva localmente no navegador.
 - Registro e filtro de entradas e despesas, com categorias comuns e valores no formato brasileiro.
 - Registro de ganhos por trabalho, serviços extras, horas trabalhadas e despesas do veículo.
 - Taxas horárias padrão de R$ 38/h de segunda a quinta e R$ 50/h de sexta a domingo (ajustáveis), preço efetivo do combustível em R$/L, consumo do carro em km/L, custo-base em R$/km e margem configuráveis.

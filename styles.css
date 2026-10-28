@@ -103,9 +103,10 @@ tbody tr:last-child td{border-bottom:0}
 .align-right{text-align:right}
 .description-cell{font-weight:600;color:#39473e}
 .category-cell{color:#8a958e}
-.sort-button{display:inline-flex;align-items:center;gap:5px;border:0;padding:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit}
+.sort-button{display:inline-flex;align-items:center;justify-content:space-between;gap:5px;width:100%;border:0;padding:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;text-align:left;text-transform:inherit}
 .sort-button:hover,.sort-button:focus-visible{color:var(--accent-dark);outline:none}
 .sort-button span{font-size:10px;color:var(--accent-dark)}
+.align-right .sort-button{justify-content:flex-end}
 .amount-income{color:var(--income);font-weight:600}.amount-expense{color:var(--expense);font-weight:600}
 .type-badge{font-size:9px;padding:4px 7px;border-radius:20px;background:var(--income-soft);color:var(--income)}
 .type-badge.expense{background:var(--expense-soft);color:var(--expense-muted)}

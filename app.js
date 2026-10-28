@@ -1223,6 +1223,7 @@ function updateRecurrenceFields() {
 
 function switchTab(name) {
   if (name !== "calendar") hideCalendarTooltip();
+  closeTransactionPopover(false);
   $$(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === name));
   $$(".view").forEach((view) => view.classList.toggle("active", view.id === `${name}-view`));
   const titles = {dashboard: "Dashboard", calendar: "Calendário", transactions: "Lançamentos", work: "Meus trabalhos"};

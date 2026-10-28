@@ -121,7 +121,13 @@ function renderPie(expenses) {
     const amount = document.createElement("span");
     amount.className = "legend-value";
     amount.textContent = money.format(value);
-    row.append(label, amount);
+    const percentage = document.createElement("span");
+    percentage.className = "legend-percentage";
+    percentage.textContent = `${(value / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1})}%`;
+    const values = document.createElement("span");
+    values.className = "legend-values";
+    values.append(amount, percentage);
+    row.append(label, values);
     $("#category-legend").append(row);
   });
 }

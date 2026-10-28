@@ -5,11 +5,19 @@ Dashboard gratuito e leve para organizar as finanças da casa. Acompanhe entrada
 ## Recursos
 
 - Dashboard mensal com seleção separada de mês e ano, totais, gráficos por categoria, movimento diário e comparativo semanal.
+- Calendário financeiro com detalhes das entradas e despesas ao passar ou focar uma data, projeção semanal do caixa, reserva necessária em reais e estimativa de horas de trabalho.
+- Exportação dos lançamentos do mês em `.ics` para importar no Google Agenda, com alertas na véspera e no dia (exportação pontual, sem sincronização automática); lembretes do navegador no dia do vencimento enquanto o app estiver aberto.
 - Histórico dos oito lançamentos mais recentes, sem limitar os dados usados nos totais mensais.
 - Personalização visual com paletas azul, verde, amarelo ou vermelho, aplicada também ao saldo do mês e à barra de navegação, e salva localmente no navegador.
+- Entradas são sempre destacadas em verde e despesas em vermelho, independentemente da paleta escolhida.
 - Logotipo da casa exibido a partir da imagem `transferir.jfif`.
 - Registro e filtro de entradas e despesas, com categorias comuns e valores no formato brasileiro.
+- Na lista de lançamentos, ordenação crescente ou decrescente por descrição, categoria, data e valor; visualização e edição em um balão flutuante, com proteção para valores gerenciados por serviços extras ou custos mensais do carro.
+- Registro de lançamentos recorrentes mensais por uma duração escolhida de 2 a 120 meses; as ocorrências preservam o dia do mês (ou usam o último dia quando necessário).
 - Registro de ganhos por trabalho, serviços extras, horas trabalhadas e despesas do veículo.
+- Quilometragem Uber salva automaticamente, com custo estimado e gasto real de combustível por quilômetro, totais mensais e médias semanais baseadas nas despesas de combustível registradas.
+- Cadastro da situação do carro (próprio, alugado ou financiado) e dos valores mensais de aluguel/financiamento e seguro; esses custos entram na estimativa líquida do Uber, sem criar lançamentos duplicados.
+- Categorias de despesas específicas para combustível e custos do carro.
 - Taxas horárias padrão de R$ 38/h de segunda a quinta e R$ 50/h de sexta a domingo (ajustáveis), preço efetivo do combustível em R$/L, consumo do carro em km/L, custo-base em R$/km e margem configuráveis.
 - Atualização automática entre dispositivos conectados ao servidor local.
 - Banco pessoal criado automaticamente em `data/household.sqlite3`. O repositório não contém dados financeiros de exemplo ou dados de usuários.

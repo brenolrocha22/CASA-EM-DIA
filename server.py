@@ -2,6 +2,7 @@
 """Small local-network household finance dashboard; uses only the Python standard library."""
 
 import argparse
+import calendar
 import json
 import math
 import re
@@ -64,6 +65,15 @@ def connect_database():
             FOREIGN KEY(transaction_id) REFERENCES transactions(id)
         )"""
     )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS vehicle_profile (
+            id INTEGER PRIMARY KEY CHECK(id = 1),
+            ownership_type TEXT NOT NULL CHECK(ownership_type IN ('own', 'rented', 'financed')),
+            monthly_cost REAL NOT NULL CHECK(monthly_cost >= 0),
+            has_insurance INTEGER NOT NULL CHECK(has_insurance IN (0, 1)),
+            insurance_cost REAL NOT NULL CHECK(insurance_cost >= 0)
+        )"""
+    )
     connection.commit()
     return connection
 
@@ -105,6 +115,19 @@ def validate_transaction(data):
     description = data.get("description")
     category = data.get("category")
     transaction_date = data.get("date")
+    is_recurring = data.get("is_recurring", False)
+    if not isinstance(is_recurring, bool):
+        raise ValueError("Informe se o lançamento deve se repetir.")
+    recurring_months = data.get("recurring_months", 1)
+    if not is_recurring:
+        recurring_months = 1
+    elif (
+        isinstance(recurring_months, bool)
+        or not isinstance(recurring_months, int)
+        or recurring_months < 2
+        or recurring_months > 120
+    ):
+        raise ValueError("A repetição deve durar entre 2 e 120 meses, incluindo o lançamento inicial.")
     amount = parse_amount(data.get("amount"))
     distance_km = parse_amount(data.get("distance_km") or 0)
     if entry_type not in ("income", "expense"):
@@ -125,7 +148,10 @@ def validate_transaction(data):
         date.fromisoformat(transaction_date)
     except ValueError:
         raise ValueError("Informe uma data válida.")
-    return entry_type, description.strip(), amount, category.strip(), transaction_date, distance_km
+    return (
+        entry_type, description.strip(), amount, category.strip(), transaction_date,
+        distance_km, recurring_months,
+    )
 
 
 def validate_uber_settings(data):
@@ -175,6 +201,40 @@ def validate_monthly_vehicle_cost(data):
     if not math.isfinite(amount) or amount < 0 or amount > 1_000_000_000:
         raise ValueError("A manutenção mensal deve ficar entre R$ 0 e R$ 1 bilhão.")
     return amount
+
+
+def validate_vehicle_profile(data):
+    if not isinstance(data, dict):
+        raise ValueError("Envie os dados dos custos do carro.")
+    ownership_type = data.get("ownership_type")
+    if ownership_type not in ("own", "rented", "financed"):
+        raise ValueError("Escolha se o carro é próprio, alugado ou financiado.")
+    has_insurance = data.get("has_insurance")
+    if not isinstance(has_insurance, bool):
+        raise ValueError("Informe se o carro tem seguro.")
+    try:
+        monthly_cost = parse_amount(data.get("monthly_cost", 0))
+        insurance_cost = parse_amount(data.get("insurance_cost", 0))
+    except ValueError:
+        raise ValueError("Informe valores válidos para os custos do carro e do seguro.")
+    if not math.isfinite(monthly_cost) or monthly_cost < 0 or monthly_cost > 1_000_000_000:
+        raise ValueError("O custo mensal do carro deve ficar entre R$ 0 e R$ 1 bilhão.")
+    if not math.isfinite(insurance_cost) or insurance_cost < 0 or insurance_cost > 1_000_000_000:
+        raise ValueError("O seguro mensal deve ficar entre R$ 0 e R$ 1 bilhão.")
+    if ownership_type == "own":
+        monthly_cost = 0
+    elif monthly_cost <= 0:
+        raise ValueError("Informe o valor mensal do aluguel ou financiamento.")
+    if has_insurance and insurance_cost <= 0:
+        raise ValueError("Informe o valor mensal do seguro.")
+    if not has_insurance:
+        insurance_cost = 0
+    return {
+        "ownership_type": ownership_type,
+        "monthly_cost": monthly_cost,
+        "has_insurance": has_insurance,
+        "insurance_cost": insurance_cost,
+    }
 
 
 def validate_extra_work(data):
@@ -305,6 +365,22 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     "SELECT month, amount FROM monthly_vehicle_costs ORDER BY month DESC"
                 ).fetchall()
             return self.send_json(200, [dict(row) for row in rows])
+        if path == "/api/vehicle-profile":
+            with database() as connection:
+                row = connection.execute(
+                    """SELECT ownership_type, monthly_cost, has_insurance, insurance_cost
+                       FROM vehicle_profile WHERE id = 1"""
+                ).fetchone()
+            profile = {
+                "ownership_type": "own",
+                "monthly_cost": 0,
+                "has_insurance": False,
+                "insurance_cost": 0,
+            }
+            if row:
+                profile.update(dict(row))
+                profile["has_insurance"] = bool(profile["has_insurance"])
+            return self.send_json(200, profile)
         if path == "/api/settings":
             with database() as connection:
                 rows = connection.execute("SELECT key, value FROM settings").fetchall()
@@ -328,13 +404,30 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         except ValueError as error:
             return self.send_json(400, {"error": str(error)})
         with database() as connection:
-            cursor = connection.execute(
-            """INSERT INTO transactions (type, description, amount, category, date, distance_km)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            transaction,
-            )
-            transaction_id = cursor.lastrowid
-        return self.send_json(201, {"id": transaction_id})
+            entry_type, description, amount, category, transaction_date, distance_km, recurring_months = transaction
+            start_date = date.fromisoformat(transaction_date)
+            transaction_id = None
+            for month_offset in range(recurring_months):
+                month_index = start_date.year * 12 + start_date.month - 1 + month_offset
+                year, month_index = divmod(month_index, 12)
+                month = month_index + 1
+                day = min(start_date.day, calendar.monthrange(year, month)[1])
+                occurrence_date = date(year, month, day).isoformat()
+                cursor = connection.execute(
+                    """INSERT INTO transactions (type, description, amount, category, date, distance_km)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (
+                        entry_type,
+                        description,
+                        amount,
+                        category,
+                        occurrence_date,
+                        distance_km if month_offset == 0 else 0,
+                    ),
+                )
+                if transaction_id is None:
+                    transaction_id = cursor.lastrowid
+        return self.send_json(201, {"id": transaction_id, "created": recurring_months})
 
     def update_vehicle_cost(self, month):
         if not re.fullmatch(r"\d{4}-\d{2}", month):
@@ -416,6 +509,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/uber-settings":
             return self.update_uber_settings()
+        if path == "/api/vehicle-profile":
+            return self.update_vehicle_profile()
         if path != "/api/settings":
             return self.send_json(404, {"error": "Recurso não encontrado."})
         try:
@@ -445,6 +540,29 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                         (name, value),
                     )
         return self.send_json(200, settings)
+
+    def update_vehicle_profile(self):
+        try:
+            profile = validate_vehicle_profile(self.read_json())
+        except ValueError as error:
+            return self.send_json(400, {"error": str(error)})
+        with database() as connection:
+            connection.execute(
+                """INSERT INTO vehicle_profile (id, ownership_type, monthly_cost, has_insurance, insurance_cost)
+                   VALUES (1, ?, ?, ?, ?)
+                   ON CONFLICT(id) DO UPDATE SET
+                       ownership_type = excluded.ownership_type,
+                       monthly_cost = excluded.monthly_cost,
+                       has_insurance = excluded.has_insurance,
+                       insurance_cost = excluded.insurance_cost""",
+                (
+                    profile["ownership_type"],
+                    profile["monthly_cost"],
+                    int(profile["has_insurance"]),
+                    profile["insurance_cost"],
+                ),
+            )
+        return self.send_json(200, profile)
 
     def do_DELETE(self):
         extra_work_match = re.fullmatch(r"/api/extra-work/(\d+)", unquote(urlparse(self.path).path))
@@ -490,6 +608,65 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_PATCH(self):
+        edit_match = re.fullmatch(r"/api/transactions/(\d+)", unquote(urlparse(self.path).path))
+        if edit_match:
+            try:
+                data = self.read_json()
+                if not isinstance(data, dict):
+                    raise ValueError("Envie os dados atualizados do lançamento.")
+                transaction = validate_transaction({**data, "is_recurring": False})
+            except ValueError as error:
+                return self.send_json(400, {"error": str(error)})
+            transaction_id = int(edit_match.group(1))
+            with database() as connection:
+                existing = connection.execute(
+                    "SELECT 1 FROM transactions WHERE id = ?", (transaction_id,)
+                ).fetchone()
+                if existing is None:
+                    return self.send_json(404, {"error": "Lançamento não encontrado."})
+                managed_by_extra = connection.execute(
+                    """SELECT 1 FROM extra_work
+                       WHERE ? IN (income_transaction_id, benefit_transaction_id, cost_transaction_id)""",
+                    (transaction_id,),
+                ).fetchone()
+                if managed_by_extra:
+                    return self.send_json(
+                        409,
+                        {"error": "Este lançamento pertence a um serviço extra. Edite o serviço na aba Meus trabalhos."},
+                    )
+                managed_vehicle_cost = connection.execute(
+                    "SELECT 1 FROM monthly_vehicle_costs WHERE transaction_id = ?",
+                    (transaction_id,),
+                ).fetchone()
+                if managed_vehicle_cost:
+                    return self.send_json(
+                        409,
+                        {"error": "Esta despesa é gerenciada pelos custos mensais do carro. Edite-a na aba Meus trabalhos."},
+                    )
+                entry_type, description, amount, category, transaction_date, distance_km, _ = transaction
+                connection.execute(
+                    """UPDATE transactions
+                       SET type = ?, description = ?, amount = ?, category = ?, date = ?, distance_km = ?
+                       WHERE id = ?""",
+                    (
+                        entry_type,
+                        description,
+                        amount,
+                        category,
+                        transaction_date,
+                        distance_km,
+                        transaction_id,
+                    ),
+                )
+            return self.send_json(200, {
+                "id": transaction_id,
+                "type": entry_type,
+                "description": description,
+                "amount": amount,
+                "category": category,
+                "date": transaction_date,
+                "distance_km": distance_km,
+            })
         match = re.fullmatch(r"/api/transactions/(\d+)/distance", unquote(urlparse(self.path).path))
         if not match:
             return self.send_json(404, {"error": "Recurso não encontrado."})

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#32191e">
   <title>Casa em Dia — Finanças da família</title>
-  <link rel="stylesheet" href="/styles.css?v=11">
-  <script src="/app.js?v=13" defer></script>
+  <link rel="stylesheet" href="/styles.css?v=21">
+  <script src="/app.js?v=22" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -18,6 +18,7 @@
       <p class="nav-label">VISÃO GERAL</p>
       <nav class="tabs" aria-label="Navegação principal">
         <button class="tab active" data-tab="dashboard"><span aria-hidden="true">◫</span> Dashboard</button>
+        <button class="tab" data-tab="calendar"><span aria-hidden="true">▦</span> Calendário</button>
         <button class="tab" data-tab="transactions"><span aria-hidden="true">↕</span> Lançamentos</button>
         <button class="tab" data-tab="work"><span aria-hidden="true">◷</span> Meus trabalhos</button>
       </nav>
@@ -46,7 +47,7 @@
           <h1 id="page-title">Dashboard</h1>
         </div>
         <div class="topbar-actions">
-          <div class="month-picker" aria-label="Período do dashboard">
+          <div class="month-picker" id="dashboard-month-picker" aria-label="Período do dashboard">
             <span aria-hidden="true">▦</span>
             <select id="month-select" aria-label="Mês do dashboard"></select>
             <span class="month-year-divider" aria-hidden="true">/</span>
@@ -69,12 +70,12 @@
           </article>
           <article class="summary-card">
             <div class="card-heading"><span><span class="heading-emoji" aria-hidden="true">📥</span> Entradas</span><span class="card-icon income-icon">↙</span></div>
-            <strong class="metric" id="income-total">R$ 0,00</strong>
+            <strong class="metric amount-income" id="income-total">R$ 0,00</strong>
             <small id="income-count">0 lançamentos</small>
           </article>
           <article class="summary-card">
             <div class="card-heading"><span><span class="heading-emoji" aria-hidden="true">📤</span> Saídas</span><span class="card-icon expense-icon">↗</span></div>
-            <strong class="metric" id="expense-total">R$ 0,00</strong>
+            <strong class="metric amount-expense" id="expense-total">R$ 0,00</strong>
             <small id="expense-count">0 lançamentos</small>
           </article>
           <article class="summary-card">
@@ -110,13 +111,79 @@
         </article>
       </section>
 
+      <section class="view" id="calendar-view" aria-labelledby="calendar-heading">
+        <div class="section-intro calendar-intro">
+          <div><h2 id="calendar-heading">Calendário financeiro</h2><p>Veja o que entra e sai e planeje o caixa da semana.</p></div>
+          <div class="calendar-actions">
+            <button class="button button-secondary" id="enable-reminders" type="button">Ativar lembretes</button>
+            <button class="button button-secondary" id="export-calendar" type="button">Exportar para Google Agenda</button>
+          </div>
+        </div>
+        <p class="calendar-connection-note" id="reminder-status">Lembretes do navegador funcionam enquanto o Casa em Dia estiver aberto. O arquivo .ics importa uma cópia do mês no Google Agenda; exporte de novo após alterar os lançamentos.</p>
+        <article class="panel calendar-panel">
+          <div class="calendar-month-toolbar">
+            <button class="calendar-nav-button" id="calendar-previous-month" type="button" aria-label="Mês anterior">‹</button>
+            <h3 id="calendar-month-label"></h3>
+            <button class="calendar-nav-button" id="calendar-next-month" type="button" aria-label="Próximo mês">›</button>
+            <button class="text-button calendar-today-button" id="calendar-today" type="button">Hoje</button>
+          </div>
+          <div class="calendar-scroll">
+            <div class="calendar-weekdays" aria-hidden="true">
+              <span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span>
+            </div>
+            <div class="calendar-grid" id="calendar-grid" aria-label="Calendário mensal"></div>
+          </div>
+          <div class="calendar-legend">
+            <span><i class="calendar-legend-dot calendar-income-dot"></i> Entrada</span>
+            <span><i class="calendar-legend-dot calendar-expense-dot"></i> Despesa — índice por dia</span>
+            <span>Clique em um dia para ver o resumo da semana.</span>
+          </div>
+        </article>
+        <div class="calendar-summary-grid">
+          <article class="summary-card">
+            <div class="card-heading"><span>📤 A pagar na semana</span></div>
+            <strong class="metric amount-expense" id="calendar-week-expenses">R$ 0,00</strong>
+            <small id="calendar-expense-count">0 despesas</small>
+          </article>
+          <article class="summary-card">
+            <div class="card-heading"><span>📥 A receber na semana</span></div>
+            <strong class="metric amount-income" id="calendar-week-income">R$ 0,00</strong>
+            <small id="calendar-income-count">0 entradas</small>
+          </article>
+          <article class="summary-card">
+            <div class="card-heading"><span>💰 Caixa projetado no fim da semana</span></div>
+            <strong class="metric" id="calendar-week-balance">R$ 0,00</strong>
+            <small id="calendar-opening-balance">Saldo projetado antes da semana: R$ 0,00</small>
+          </article>
+          <article class="summary-card calendar-shortfall-card">
+            <div class="card-heading"><span>🎯 Reserva necessária na semana</span></div>
+            <strong class="metric amount-expense" id="calendar-shortfall">R$ 0,00</strong>
+            <small id="calendar-shortfall-hours">0 h de trabalho estimadas</small>
+          </article>
+        </div>
+        <article class="panel calendar-week-panel">
+          <div class="panel-heading"><div><h3>Movimentação da semana</h3><p id="calendar-week-label"></p></div><span class="panel-badge" id="calendar-week-count">0 LANÇAMENTOS</span></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>DATA</th><th>DESCRIÇÃO</th><th>CATEGORIA / ÍNDICE</th><th>TIPO</th><th class="align-right">VALOR</th></tr></thead><tbody id="calendar-week-list"></tbody></table>
+          </div>
+          <p class="empty-state" id="calendar-week-empty">Nenhum lançamento nesta semana. Registre uma entrada ou despesa com a data prevista.</p>
+        </article>
+        <p class="helper-note calendar-disclaimer">A projeção considera os lançamentos registrados antes e durante a semana. A reserva necessária é o maior valor que o caixa projetado fica abaixo de zero; as horas usam sua taxa de segunda a quinta (ou R$ 38/h como referência).</p>
+      </section>
+
       <section class="view" id="transactions-view">
         <div class="section-intro"><div><h2>Seus lançamentos</h2><p>Registre e acompanhe as entradas e despesas da família.</p></div><button class="button button-primary" data-new-transaction><span aria-hidden="true">＋</span> Adicionar lançamento</button></div>
         <article class="panel transactions-panel">
           <div class="filter-row"><div class="filter-tabs" role="group" aria-label="Filtrar lançamentos">
             <button class="filter active" data-filter="all">Todos</button><button class="filter" data-filter="income">Entradas</button><button class="filter" data-filter="expense">Despesas</button>
           </div><span class="results-count" id="results-count">0 lançamentos</span></div>
-          <div class="table-wrap"><table><thead><tr><th>DESCRIÇÃO</th><th>CATEGORIA</th><th>DATA</th><th>TIPO</th><th class="align-right">VALOR</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="transaction-list"></tbody></table></div>
+          <div class="table-wrap"><table id="transaction-table"><thead><tr>
+            <th data-sort-key="description" aria-sort="none"><button class="sort-button" type="button" aria-label="Ordenar por descrição">Descrição <span aria-hidden="true">↕</span></button></th>
+            <th data-sort-key="category" aria-sort="none"><button class="sort-button" type="button" aria-label="Ordenar por categoria">Categoria <span aria-hidden="true">↕</span></button></th>
+            <th data-sort-key="date" aria-sort="descending"><button class="sort-button" type="button" aria-label="Ordenar por data">Data <span aria-hidden="true">↓</span></button></th>
+            <th>Tipo</th><th class="align-right" data-sort-key="amount" aria-sort="none"><button class="sort-button" type="button" aria-label="Ordenar por valor">Valor <span aria-hidden="true">↕</span></button></th>
+            <th><span class="sr-only">Ações</span></th>
+          </tr></thead><tbody id="transaction-list"></tbody></table></div>
           <p class="empty-state" id="transactions-empty">Nenhum lançamento para este filtro e mês.</p>
         </article>
       </section>
@@ -151,6 +218,14 @@
               <div class="work-metric"><span>Horas em extras</span><strong id="work-extra-hours">0 h</strong></div>
               <div class="work-metric"><span>KM informados</span><strong id="uber-distance-total">0 km</strong></div>
             </div>
+            <div class="fuel-usage-summary" aria-label="Resumo de combustível e custo por quilômetro">
+              <div><span>Combustível no mês</span><strong id="work-fuel-month-total">R$ 0,00</strong></div>
+              <div><span>Média semanal de combustível</span><strong id="work-fuel-week-average">R$ 0,00</strong></div>
+              <div><span>KM informados no mês</span><strong id="work-fuel-distance-total">0 km</strong></div>
+              <div><span>Gasto real de combustível por km no mês</span><strong id="work-fuel-cost-per-km">—</strong></div>
+              <div><span>Média semanal de combustível por km</span><strong id="work-fuel-weekly-cost-per-km">—</strong></div>
+              <div><span>Custo estimado por km rodado</span><strong id="work-estimated-cost-per-km">—</strong></div>
+            </div>
             <div class="expense-target">
               <span>Despesas do mês</span><strong id="work-expenses-total">R$ 0,00</strong>
               <span>Horas necessárias para cobrir as despesas</span><strong id="work-required-hours">—</strong>
@@ -161,10 +236,37 @@
               <div><span>Custos Uber estimados</span><strong id="uber-estimated-costs">—</strong></div>
               <div><span>Lucro líquido estimado</span><strong id="uber-estimated-profit">—</strong></div>
               <div><span>Margem líquida</span><strong id="uber-margin">—</strong></div>
+              <div><span>Parcela + seguro + manutenção</span><strong id="uber-fixed-costs">—</strong></div>
             </div>
             <p class="helper-note" id="uber-margin-status">Informe o preço efetivo por litro (já com desconto), o consumo do carro em km/L, o custo-base por km e a quilometragem dos dias UBER para estimar a margem.</p>
           </article>
         </div>
+        <article class="panel vehicle-profile-panel">
+          <div class="panel-heading"><div><h3>🚘 Custos fixos do carro</h3><p>Esses valores são considerados na estimativa líquida do Uber, sem criar despesas automáticas.</p></div><span class="panel-badge">MENSAL</span></div>
+          <form id="vehicle-profile-form" class="vehicle-profile-form">
+            <label>Situação do carro
+              <select name="ownership_type" id="vehicle-ownership-type">
+                <option value="own">Próprio</option>
+                <option value="rented">Alugado</option>
+                <option value="financed">Financiado</option>
+              </select>
+            </label>
+            <label id="vehicle-payment-field" class="conditional-field" hidden>Valor mensal do aluguel/financiamento (R$)
+              <input name="monthly_cost" type="text" inputmode="decimal" placeholder="0,00">
+            </label>
+            <label>O carro tem seguro?
+              <select name="has_insurance" id="vehicle-has-insurance">
+                <option value="no">Não</option>
+                <option value="yes">Sim</option>
+              </select>
+            </label>
+            <label id="vehicle-insurance-field" class="conditional-field" hidden>Valor mensal do seguro (R$)
+              <input name="insurance_cost" type="text" inputmode="decimal" placeholder="0,00">
+            </label>
+            <button class="button button-primary" type="submit">Salvar custos do carro</button>
+            <p class="form-error vehicle-profile-error" id="vehicle-profile-error" role="alert"></p>
+          </form>
+        </article>
         <article class="panel maintenance-panel">
           <div class="panel-heading"><div><h3>🚘 Manutenção mensal do carro</h3><p>O valor será lançado uma única vez como despesa no mês selecionado.</p></div><span class="panel-badge" id="maintenance-month-label"></span></div>
           <form id="vehicle-cost-form" class="vehicle-cost-form">
@@ -174,7 +276,7 @@
           </form>
         </article>
         <article class="panel uber-mileage-panel">
-          <div class="panel-heading"><div><h3>🛣️ Quilometragem dos ganhos Uber</h3><p>Informe os quilômetros totais do dia para habilitar a estimativa de custos e margem.</p></div><span class="results-count" id="uber-mileage-count">0 dias</span></div>
+          <div class="panel-heading"><div><h3>🛣️ Quilometragem dos ganhos Uber</h3><p>Informe os quilômetros totais do dia. O valor é salvo automaticamente e também pode ser salvo pelo botão.</p></div><span class="results-count" id="uber-mileage-count">0 dias</span></div>
           <div class="table-wrap"><table><thead><tr><th>DATA</th><th>GANHO DO DIA</th><th>KM RODADOS</th><th><span class="sr-only">Ação</span></th></tr></thead><tbody id="uber-mileage-list"></tbody></table></div>
           <p class="empty-state" id="uber-mileage-empty">Registre ganhos na categoria UBER para informar a quilometragem por dia.</p>
         </article>
@@ -231,10 +333,47 @@
       <label id="uber-distance-label" class="conditional-field" hidden>Quilômetros rodados neste dia (opcional)
         <input id="transaction-distance-km" name="distance_km" type="text" inputmode="decimal" placeholder="Ex.: 120">
       </label>
+      <div class="recurrence-fields">
+        <label class="recurrence-toggle"><input id="transaction-recurring" name="is_recurring" type="checkbox"> Repetir este lançamento todo mês</label>
+        <label id="recurrence-months-field" class="conditional-field" hidden>Por quantos meses, incluindo este?
+          <input id="transaction-recurring-months" name="recurring_months" type="number" min="2" max="120" step="1" value="3">
+        </label>
+        <p class="helper-note recurrence-note" id="recurrence-note">As próximas ocorrências manterão o mesmo valor e o dia escolhido; se o mês não tiver esse dia, será usada a última data do mês.</p>
+      </div>
       <p class="form-error" id="form-error" role="alert"></p>
       <div class="dialog-actions"><button type="button" class="button button-secondary" id="cancel-dialog">Cancelar</button><button type="submit" class="button button-primary">Salvar lançamento</button></div>
     </form>
   </dialog>
+  <div class="calendar-tooltip" id="calendar-tooltip" role="tooltip" hidden></div>
+  <div class="transaction-popover" id="transaction-popover" role="dialog" aria-modal="false" aria-label="Visualizar e editar lançamento" hidden>
+    <form id="transaction-edit-form">
+      <div class="transaction-popover-heading">
+        <div><p class="eyebrow">DETALHES DO LANÇAMENTO</p><h2 id="transaction-edit-title">Editar lançamento</h2></div>
+        <button type="button" class="close-button" id="close-transaction-popover" aria-label="Fechar">×</button>
+      </div>
+      <p class="transaction-edit-note" id="transaction-edit-note"></p>
+      <label>Tipo
+        <select name="type" id="transaction-edit-type"><option value="income">Entrada</option><option value="expense">Despesa</option></select>
+      </label>
+      <label>Descrição<input name="description" maxlength="120" required></label>
+      <div class="transaction-edit-row">
+        <label>Categoria<select name="category" id="transaction-edit-category" required></select></label>
+        <label>Valor (R$)<input name="amount" inputmode="decimal" autocomplete="off" required></label>
+      </div>
+      <div class="transaction-edit-row">
+        <label>Data<input name="date" type="date" required></label>
+        <label id="transaction-edit-distance-field" hidden>Quilômetros (opcional)
+          <input name="distance_km" inputmode="decimal" autocomplete="off">
+        </label>
+      </div>
+      <p class="transaction-edit-readonly" id="transaction-edit-readonly" hidden></p>
+      <p class="form-error" id="transaction-edit-error" role="alert"></p>
+      <div class="dialog-actions">
+        <button type="button" class="button button-secondary" id="cancel-transaction-edit">Fechar</button>
+        <button type="submit" class="button button-primary" id="save-transaction-edit">Salvar alterações</button>
+      </div>
+    </form>
+  </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

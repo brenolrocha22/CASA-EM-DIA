@@ -37,7 +37,7 @@ cd CASA-EM-DIA
 python server.py
 ```
 
-Abra <http://127.0.0.1:8765>. O servidor, por padrão, aceita conexões somente do próprio computador.
+Abra <http://127.0.0.1:8765>. O servidor, por padrão, aceita conexões somente do próprio computador. No Windows, o atalho `abrir_dashboard.vbs` (dê dois cliques) inicia o servidor nesse mesmo modo e abre o navegador; ele precisa ficar na pasta do projeto e exige o Python instalado.
 
 ### Acessar em outros dispositivos da casa
 

@@ -1,19 +1,24 @@
 Option Explicit
 
-Dim shell, appFolder, pythonPath, attempt
-Set shell = CreateObject("WScript.Shell")
+' Abre o Casa em Dia somente neste computador (http://127.0.0.1:8765).
+' Para usar em outros aparelhos da casa, inicie manualmente em rede privada confiavel:
+'   python server.py --host 0.0.0.0 --port 8765
 
-appFolder = "C:\Users\Breno\Desktop\Projects\PROJETO LIFESTYLE"
-pythonPath = "C:\Users\Breno\AppData\Local\Python\pythoncore-3.14-64\python.exe"
+Dim shell, fso, appFolder, pythonCommand, attempt
+Set shell = CreateObject("WScript.Shell")
+Set fso = CreateObject("Scripting.FileSystemObject")
+
+appFolder = fso.GetParentFolderName(WScript.ScriptFullName)
 shell.CurrentDirectory = appFolder
 
-If Not CreateObject("Scripting.FileSystemObject").FileExists(pythonPath) Then
-  MsgBox "O Python não foi encontrado neste computador. Entre em contato com quem configurou o Casa em Dia.", vbExclamation, "Casa em Dia"
+pythonCommand = FindPython()
+If pythonCommand = "" Then
+  MsgBox "O Python nao foi encontrado neste computador. Instale o Python 3.9 ou superior em python.org e tente novamente.", vbExclamation, "Casa em Dia"
   WScript.Quit 1
 End If
 
 If Not ServerResponds() Then
-  shell.Run """" & pythonPath & """ """ & appFolder & "\server.py"" --host 0.0.0.0 --port 8765", 0, False
+  shell.Run pythonCommand & " """ & appFolder & "\server.py"" --port 8765", 0, False
   For attempt = 1 To 30
     WScript.Sleep 500
     If ServerResponds() Then Exit For
@@ -25,6 +30,17 @@ If Not ServerResponds() Then
 End If
 
 shell.Run "http://127.0.0.1:8765/", 1, False
+
+Function FindPython()
+  Dim candidate
+  FindPython = ""
+  For Each candidate In Array("python", "py")
+    If shell.Run("cmd /c " & candidate & " --version", 0, True) = 0 Then
+      FindPython = candidate
+      Exit Function
+    End If
+  Next
+End Function
 
 Function ServerResponds()
   Dim request

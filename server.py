@@ -16,6 +16,9 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parent
 DATABASE = ROOT / "data" / "household.sqlite3"
 MAX_BODY_SIZE = 32_768
+# Somente estes arquivos são servidos pelo navegador; o banco (data/) e o código do servidor ficam de fora.
+STATIC_FILES = {"/", "/index.html", "/app.js", "/styles.css", "/casa_em_dia.ico", "/transferir.jfif"}
+LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 
 def connect_database():
@@ -303,7 +306,21 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def parse_request(self):
+        if not super().parse_request():
+            return False
+        # Com o servidor só neste computador, recusa Host de outros nomes (protege contra DNS rebinding).
+        if getattr(self.server, "loopback_only", False):
+            hostname = urlparse("//" + self.headers.get("Host", "")).hostname
+            if hostname not in LOOPBACK_HOSTS:
+                self.send_error(403, "Host não permitido.")
+                return False
+        return True
+
     def read_json(self):
+        # Exigir application/json obriga o navegador a fazer preflight em requisições de outros sites.
+        if not self.headers.get("Content-Type", "").lower().startswith("application/json"):
+            raise ValueError("Envie o conteúdo como application/json.")
         try:
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
@@ -688,6 +705,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         return self.send_json(200, {"id": int(match.group(1)), "distance_km": distance_km})
 
     def translate_path(self, path):
+        if unquote(urlparse(path).path) not in STATIC_FILES:
+            return str(ROOT / "__not_found__")
         requested = super().translate_path(path)
         resolved = Path(requested).resolve()
         if resolved != ROOT and ROOT not in resolved.parents:
@@ -702,6 +721,7 @@ def main():
     args = parser.parse_args()
     connect_database().close()
     server = ThreadingHTTPServer((args.host, args.port), DashboardHandler)
+    server.loopback_only = args.host in LOOPBACK_HOSTS
     print(f"Dashboard disponível em http://127.0.0.1:{args.port}")
     if args.host == "0.0.0.0":
         print("Para outros dispositivos da rede, use o endereço IP local deste computador.")

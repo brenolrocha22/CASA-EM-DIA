@@ -2,6 +2,20 @@
 
 Dashboard gratuito e leve para organizar as finanças da casa. Acompanhe entradas, despesas e saldo por mês, veja gráficos e registre ganhos de trabalho e quilometragem. A interface usa HTML, CSS e JavaScript sem bibliotecas externas; o servidor e o banco de dados usam apenas Python e SQLite.
 
+![Dashboard mensal do Casa em Dia](images/dashboard.png)
+
+## Telas
+
+| Comparativo semanal e últimos lançamentos | Calendário financeiro |
+| --- | --- |
+| ![Entradas e saídas por semana e últimos lançamentos](images/dashboard-semanal-lancamentos.png) | ![Calendário financeiro do mês](images/calendario.png) |
+| **Meus trabalhos: valor da hora e resumo do mês** | **Custos do carro e quilometragem** |
+| ![Valor da hora no Uber e resumo do mês](images/meus-trabalhos.png) | ![Custos fixos, manutenção e quilometragem do carro](images/custos-quilometragem.png) |
+| **Serviços extras e paletas de cores** | |
+| ![Registro de serviço extra e escolha de paleta](images/servico-extra-paletas.png) | |
+
+Valores e descrições dos lançamentos aparecem borrados nas imagens para proteger dados pessoais.
+
 ## Recursos
 
 - Dashboard mensal com seleção separada de mês e ano, totais, gráficos por categoria, movimento diário e comparativo semanal.

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+data
+*.sqlite3
+*.sqlite3-*
+images
+abrir_dashboard.vbs
+Dockerfile
+compose.yaml
+.dockerignore
+README.md
+LICENSE

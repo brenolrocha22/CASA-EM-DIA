@@ -1,0 +1,15 @@
+services:
+  casa-em-dia:
+    build: .
+    image: casa-em-dia
+    container_name: casa-em-dia
+    ports:
+      # Somente este computador. Para liberar na rede da casa, troque por "8765:8765".
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - casa-em-dia-dados:/app/data
+    restart: unless-stopped
+
+volumes:
+  casa-em-dia-dados:
+    name: casa-em-dia-dados

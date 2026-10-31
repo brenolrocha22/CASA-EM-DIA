@@ -53,6 +53,21 @@ python server.py
 
 Abra <http://127.0.0.1:8765>. O servidor, por padrão, aceita conexões somente do próprio computador. No Windows, o atalho `abrir_dashboard.vbs` (dê dois cliques) inicia o servidor nesse mesmo modo e abre o navegador; ele precisa ficar na pasta do projeto e exige o Python instalado.
 
+### Executar com Docker
+
+Se preferir não instalar o Python, use o [Docker Desktop](https://www.docker.com/products/docker-desktop/) (ou o Docker Engine com o plugin Compose). Com o Docker aberto, na pasta do projeto:
+
+```powershell
+docker compose up --build -d
+```
+
+Abra <http://127.0.0.1:8765>. Para parar, use `docker compose down`.
+
+- O banco fica no volume `casa-em-dia-dados` e continua salvo depois de `docker compose down` e de reiniciar o computador. Só o comando `docker compose down -v` apaga o volume e os dados.
+- Para fazer cópia de segurança do banco: `docker compose cp casa-em-dia:/app/data/household.sqlite3 ./backup.sqlite3`.
+- Assim como na execução com Python, o container aceita conexões somente do próprio computador. Para usar em outros dispositivos da casa, troque `"127.0.0.1:8765:8765"` por `"8765:8765"` no `compose.yaml` e siga os mesmos cuidados da seção abaixo.
+- Se a porta 8765 já estiver em uso (por exemplo, com `python server.py` aberto), encerre o outro servidor antes de subir o container.
+
 ### Acessar em outros dispositivos da casa
 
 Em uma rede Wi-Fi privada e confiável, inicie o servidor aceitando conexões locais:

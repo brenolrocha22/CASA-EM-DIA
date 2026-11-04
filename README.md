@@ -1,8 +1,19 @@
 # Casa em Dia
 
-Dashboard gratuito e leve para organizar as finanças da casa. Acompanhe entradas, despesas e saldo por mês, veja gráficos e registre ganhos de trabalho e quilometragem. A interface usa HTML, CSS e JavaScript sem bibliotecas externas; o servidor e o banco de dados usam apenas Python e SQLite.
+Dashboard gratuito e leve para organizar as finanças da casa. Acompanhe entradas, despesas e saldo por mês, encontre qualquer lançamento com filtros de busca, veja gráficos e registre ganhos de trabalho e quilometragem. A interface usa HTML, CSS e JavaScript sem bibliotecas externas; o servidor e o banco de dados usam apenas Python e SQLite.
 
 ![Dashboard mensal do Casa em Dia](images/dashboard.png)
+
+## Novidades
+
+- **Visual em degradê** que acompanha a paleta escolhida (vermelho, azul, verde ou amarelo) no cartão de saldo, nos botões, na barra lateral e no topo.
+- **Filtros de busca em Lançamentos**: texto livre (sem diferenciar acentos), categoria, período de/até em qualquer mês, valor mínimo e máximo, totais do resultado e exportação em CSV pronto para Excel e Google Planilhas.
+
+| Filtros de busca em Lançamentos | Degradê na paleta azul |
+| --- | --- |
+| ![Busca por "mercado" de outubro a novembro com totais do resultado](images/filtros-lancamentos.png) | ![Dashboard com degradê na paleta azul](images/dashboard-degrade-azul.png) |
+
+<p align="center"><img src="images/lancamentos-celular.png" alt="Lançamentos e filtros no celular" width="260"></p>
 
 ## Telas
 
@@ -14,7 +25,7 @@ Dashboard gratuito e leve para organizar as finanças da casa. Acompanhe entrada
 | **Serviços extras e paletas de cores** | |
 | ![Registro de serviço extra e escolha de paleta](images/servico-extra-paletas.png) | |
 
-Valores e descrições dos lançamentos aparecem borrados nas imagens para proteger dados pessoais.
+Os prints da seção Novidades e o dashboard do topo usam dados fictícios. Nas demais imagens, valores e descrições aparecem borrados para proteger dados pessoais.
 
 ## Recursos
 
@@ -22,10 +33,11 @@ Valores e descrições dos lançamentos aparecem borrados nas imagens para prote
 - Calendário financeiro com detalhes das entradas e despesas ao passar ou focar uma data, projeção semanal do caixa, reserva necessária em reais e estimativa de horas de trabalho.
 - Exportação dos lançamentos do mês em `.ics` para importar no Google Agenda, com alertas na véspera e no dia (exportação pontual, sem sincronização automática); lembretes do navegador no dia do vencimento enquanto o app estiver aberto.
 - Histórico dos oito lançamentos mais recentes, sem limitar os dados usados nos totais mensais.
-- Personalização visual com paletas azul, verde, amarelo ou vermelho, aplicada também ao saldo do mês e à barra de navegação, e salva localmente no navegador.
+- Personalização visual com paletas azul, verde, amarelo ou vermelho, em degradê no saldo do mês, nos botões e na barra de navegação, salva localmente no navegador.
 - Entradas são sempre destacadas em verde e despesas em vermelho, independentemente da paleta escolhida.
 - Logotipo da casa exibido a partir da imagem `transferir.jfif`.
-- Registro e filtro de entradas e despesas, com categorias comuns e valores no formato brasileiro.
+- Registro de entradas e despesas, com categorias comuns e valores no formato brasileiro.
+- Busca de lançamentos por texto, tipo, categoria, período livre (de/até) e faixa de valor, com totais de entradas, despesas e saldo do resultado e exportação do resultado em CSV (separador `;`, compatível com Excel em português).
 - Na lista de lançamentos, ordenação crescente ou decrescente por descrição, categoria, data e valor; visualização e edição em um balão flutuante, com proteção para valores gerenciados por serviços extras ou custos mensais do carro.
 - Registro de lançamentos recorrentes mensais por uma duração escolhida de 2 a 120 meses; as ocorrências preservam o dia do mês (ou usam o último dia quando necessário).
 - Registro de ganhos por trabalho, serviços extras, horas trabalhadas e despesas do veículo.

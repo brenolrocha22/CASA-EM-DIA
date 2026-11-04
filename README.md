@@ -6,6 +6,8 @@ Dashboard gratuito e leve para organizar as finanças da casa. Acompanhe entrada
 
 ## Novidades
 
+Histórico completo, com os bugs encontrados e corrigidos em cada versão: [CHANGELOG.md](CHANGELOG.md).
+
 - **Visual em degradê** que acompanha a paleta escolhida (vermelho, azul, verde ou amarelo) no cartão de saldo, nos botões, na barra lateral e no topo.
 - **Filtros de busca em Lançamentos**: texto livre (sem diferenciar acentos), categoria, período de/até em qualquer mês, valor mínimo e máximo, totais do resultado e exportação em CSV pronto para Excel e Google Planilhas.
 

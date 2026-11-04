@@ -127,7 +127,7 @@ function render() {
   renderBalanceColumns(transactions);
   renderWeeklyFlows(transactions);
   renderRecent();
-  renderTransactions(transactions);
+  renderTransactions();
   renderWork(
     income,
     expenses,
@@ -304,13 +304,119 @@ function renderRecent() {
   $("#recent-empty").style.display = latest.length ? "none" : "block";
 }
 
-function renderTransactions(transactions) {
-  const filtered = transactions.filter((item) => state.filter === "all" || item.type === state.filter)
-    .sort(compareTransactions);
+const normalizeText = (value) => String(value).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+function readFilters() {
+  const minText = $("#filter-min-amount").value.trim();
+  const maxText = $("#filter-max-amount").value.trim();
+  return {
+    search: normalizeText($("#filter-search").value),
+    category: $("#filter-category").value,
+    dateFrom: $("#filter-date-from").value,
+    dateTo: $("#filter-date-to").value,
+    minAmount: minText ? parseBrazilianAmount(minText) : null,
+    maxAmount: maxText ? parseBrazilianAmount(maxText) : null,
+    minInvalid: Boolean(minText) && Number.isNaN(parseBrazilianAmount(minText)),
+    maxInvalid: Boolean(maxText) && Number.isNaN(parseBrazilianAmount(maxText))
+  };
+}
+
+function filteredTransactions(filters = readFilters()) {
+  const usesCustomPeriod = Boolean(filters.dateFrom || filters.dateTo);
+  return state.transactions.filter((item) => {
+    if (state.filter !== "all" && item.type !== state.filter) return false;
+    if (usesCustomPeriod) {
+      if (filters.dateFrom && item.date < filters.dateFrom) return false;
+      if (filters.dateTo && item.date > filters.dateTo) return false;
+    } else if (!item.date.startsWith(state.month)) {
+      return false;
+    }
+    if (filters.category && item.category !== filters.category) return false;
+    if (filters.search && !normalizeText(`${item.description} ${item.category}`).includes(filters.search)) return false;
+    if (Number.isFinite(filters.minAmount) && amountOf(item) < filters.minAmount) return false;
+    if (Number.isFinite(filters.maxAmount) && amountOf(item) > filters.maxAmount) return false;
+    return true;
+  });
+}
+
+function populateFilterCategories() {
+  const select = $("#filter-category");
+  const selected = select.value;
+  const categories = [...new Set([
+    ...CATEGORIES.expense, ...CATEGORIES.income, ...state.transactions.map((item) => item.category)
+  ])].sort((a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"}));
+  const options = categories.map((category) => new Option(category, category));
+  select.replaceChildren(new Option("Todas", ""), ...options);
+  select.value = categories.includes(selected) ? selected : "";
+}
+
+function describeFilterScope(filters) {
+  const format = (iso) => brazilianDateFormat.format(new Date(`${iso}T00:00:00`));
+  if (filters.dateFrom && filters.dateTo) {
+    if (filters.dateFrom > filters.dateTo) return "A data inicial está depois da data final. Ajuste o período.";
+    return `Período de ${format(filters.dateFrom)} a ${format(filters.dateTo)}.`;
+  }
+  if (filters.dateFrom) return `A partir de ${format(filters.dateFrom)}.`;
+  if (filters.dateTo) return `Até ${format(filters.dateTo)}.`;
+  const [year, month] = state.month.split("-").map(Number);
+  return `Mostrando ${monthFormat.format(new Date(year, month - 1, 1))} (mês selecionado no topo). Escolha datas para buscar em outros períodos.`;
+}
+
+function renderTransactions() {
+  populateFilterCategories();
+  const filters = readFilters();
+  $("#filter-min-amount").toggleAttribute("aria-invalid", filters.minInvalid);
+  $("#filter-max-amount").toggleAttribute("aria-invalid", filters.maxInvalid);
+  const filtered = filteredTransactions(filters).sort(compareTransactions);
+  state.lastFilteredTransactions = filtered;
   $("#transaction-list").replaceChildren(...filtered.map((item) => transactionRow(item, true)));
   $("#transactions-empty").style.display = filtered.length ? "none" : "block";
   $("#results-count").textContent = `${filtered.length} ${filtered.length === 1 ? "lançamento" : "lançamentos"}`;
+  const amountWarning = filters.minInvalid || filters.maxInvalid ? " Valor inválido ignorado: use o formato 1.234,56." : "";
+  $("#filter-scope").textContent = describeFilterScope(filters) + amountWarning;
+  const income = filtered.filter((item) => item.type === "income").reduce((sum, item) => sum + amountOf(item), 0);
+  const expense = filtered.filter((item) => item.type === "expense").reduce((sum, item) => sum + amountOf(item), 0);
+  $("#filtered-income").textContent = money.format(income);
+  $("#filtered-expense").textContent = money.format(expense);
+  const balance = $("#filtered-balance");
+  balance.textContent = money.format(income - expense);
+  balance.classList.toggle("amount-income", income - expense > 0);
+  balance.classList.toggle("amount-expense", income - expense < 0);
+  $("#export-filtered").disabled = !filtered.length;
   updateTransactionSortHeaders();
+}
+
+function clearFilters() {
+  $("#search-filters").reset();
+  state.filter = "all";
+  $$(".filter").forEach((button) => button.classList.toggle("active", button.dataset.filter === "all"));
+  renderTransactions();
+}
+
+function exportFilteredCsv() {
+  const rows = state.lastFilteredTransactions || [];
+  if (!rows.length) return;
+  const escape = (value) => `"${String(value).replace(/"/g, '""')}"`;
+  const lines = [["Data", "Descrição", "Categoria", "Tipo", "Valor (R$)"].join(";")];
+  for (const item of rows) {
+    const [year, month, day] = item.date.split("-");
+    lines.push([
+      `${day}/${month}/${year}`,
+      escape(item.description),
+      escape(item.category),
+      item.type === "income" ? "Entrada" : "Despesa",
+      (item.type === "expense" ? -amountOf(item) : amountOf(item)).toFixed(2).replace(".", ",")
+    ].join(";"));
+  }
+  const blob = new Blob(["﻿" + lines.join("\r\n")], {type: "text/csv;charset=utf-8"});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `lancamentos-casa-em-dia-${formatIsoDateInput(new Date())}.csv`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  toast(`${rows.length} ${rows.length === 1 ? "lançamento exportado" : "lançamentos exportados"} em CSV.`);
 }
 
 function compareTransactions(first, second) {
@@ -1230,6 +1336,8 @@ function switchTab(name) {
   const titles = {dashboard: "Dashboard", calendar: "Calendário", transactions: "Lançamentos", work: "Meus trabalhos"};
   $("#page-title").textContent = titles[name];
   $("#dashboard-month-picker").hidden = name === "calendar";
+  // Gráficos desenhados com a aba escondida ficam com tamanho zero; redesenha ao voltar.
+  if (name === "dashboard") render();
 }
 
 function toast(message) {
@@ -1448,8 +1556,13 @@ function init() {
   $$(".filter").forEach((button) => button.addEventListener("click", () => {
     state.filter = button.dataset.filter;
     $$(".filter").forEach((filter) => filter.classList.toggle("active", filter === button));
-    renderTransactions(monthTransactions());
+    renderTransactions();
   }));
+  $("#search-filters").addEventListener("input", () => renderTransactions());
+  $("#search-filters").addEventListener("change", () => renderTransactions());
+  $("#search-filters").addEventListener("submit", (event) => event.preventDefault());
+  $("#clear-filters").addEventListener("click", clearFilters);
+  $("#export-filtered").addEventListener("click", exportFilteredCsv);
   $$("#transaction-table [data-sort-key] button").forEach((button) => {
     button.addEventListener("click", () => {
       const sortKey = button.closest("[data-sort-key]").dataset.sortKey;
@@ -1459,7 +1572,7 @@ function init() {
         state.transactionSortKey = sortKey;
         state.transactionSortDirection = "asc";
       }
-      renderTransactions(monthTransactions());
+      renderTransactions();
     });
   });
   $("#transaction-edit-type").addEventListener("change", () => updateTransactionEditCategories());

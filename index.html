@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#32191e">
   <title>Casa em Dia — Finanças da família</title>
-  <link rel="stylesheet" href="/styles.css?v=21">
-  <script src="/app.js?v=23" defer></script>
+  <link rel="icon" href="/casa_em_dia.ico">
+  <link rel="stylesheet" href="/styles.css?v=22">
+  <script src="/app.js?v=24" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -177,6 +178,38 @@
           <div class="filter-row"><div class="filter-tabs" role="group" aria-label="Filtrar lançamentos">
             <button class="filter active" data-filter="all">Todos</button><button class="filter" data-filter="income">Entradas</button><button class="filter" data-filter="expense">Despesas</button>
           </div><span class="results-count" id="results-count">0 lançamentos</span></div>
+          <form class="search-filters" id="search-filters" role="search" aria-label="Buscar lançamentos">
+            <label class="search-field">Buscar
+              <span class="search-input-wrap"><span aria-hidden="true">🔍</span><input type="search" id="filter-search" placeholder="Descrição ou categoria (ex.: mercado, uber)" autocomplete="off"></span>
+            </label>
+            <label>Categoria
+              <select id="filter-category"><option value="">Todas</option></select>
+            </label>
+            <label>De
+              <input type="date" id="filter-date-from">
+            </label>
+            <label>Até
+              <input type="date" id="filter-date-to">
+            </label>
+            <label>Valor mínimo (R$)
+              <input type="text" id="filter-min-amount" inputmode="decimal" placeholder="0,00" autocomplete="off">
+            </label>
+            <label>Valor máximo (R$)
+              <input type="text" id="filter-max-amount" inputmode="decimal" placeholder="0,00" autocomplete="off">
+            </label>
+          </form>
+          <div class="filter-footer">
+            <p class="filter-scope" id="filter-scope" aria-live="polite">Mostrando o mês selecionado no topo.</p>
+            <div class="filter-actions">
+              <button class="text-button" id="clear-filters" type="button">Limpar filtros</button>
+              <button class="button button-secondary" id="export-filtered" type="button"><span aria-hidden="true">⬇</span> Exportar CSV</button>
+            </div>
+          </div>
+          <div class="filter-totals" aria-label="Totais do resultado">
+            <div><span>Entradas</span><strong class="amount-income" id="filtered-income">R$ 0,00</strong></div>
+            <div><span>Despesas</span><strong class="amount-expense" id="filtered-expense">R$ 0,00</strong></div>
+            <div class="filter-total-balance"><span>Saldo do resultado</span><strong id="filtered-balance">R$ 0,00</strong></div>
+          </div>
           <div class="table-wrap"><table id="transaction-table"><thead><tr>
             <th data-sort-key="description" aria-sort="none"><button class="sort-button" type="button" aria-label="Ordenar por descrição">Descrição <span aria-hidden="true">↕</span></button></th>
             <th data-sort-key="category" aria-sort="none"><button class="sort-button" type="button" aria-label="Ordenar por categoria">Categoria <span aria-hidden="true">↕</span></button></th>
